@@ -14,6 +14,7 @@ public class Client{
     JButton playButton = new JButton("Play");
     JButton pauseButton = new JButton("Pause");
     JButton tearButton = new JButton("Teardown");
+    JButton describeButton = new JButton("Describe");
     JPanel mainPanel = new JPanel();
     JPanel buttonPanel = new JPanel();
     JLabel iconLabel = new JLabel();
@@ -66,11 +67,16 @@ public class Client{
         buttonPanel.add(setupButton);
         buttonPanel.add(playButton);
         buttonPanel.add(pauseButton);
+        buttonPanel.add(describeButton);
         buttonPanel.add(tearButton);
         setupButton.addActionListener(new setupButtonListener());
         playButton.addActionListener(new playButtonListener());
         pauseButton.addActionListener(new pauseButtonListener());
         tearButton.addActionListener(new tearButtonListener());
+        describeButton.addActionListener(new describeButtonListener());
+
+       
+
 
         //Image display label
         iconLabel.setIcon(null);
@@ -79,12 +85,14 @@ public class Client{
         mainPanel.setLayout(null);
         mainPanel.add(iconLabel);
         mainPanel.add(buttonPanel);
-        iconLabel.setBounds(0,0,380,280);
-        buttonPanel.setBounds(0,280,380,50);
+        iconLabel.setBounds(110,50,380,280);
+        buttonPanel.setBounds(10,400,580,50);
 
         f.getContentPane().add(mainPanel, BorderLayout.CENTER);
-        f.setSize(new Dimension(390,370));
+        f.setSize(new Dimension(600,600));
+    
         f.setVisible(true);
+
 
         //init timer
         //--------------------------
@@ -147,7 +155,7 @@ public class Client{
                 }
                 RTSPSeqNb = 1;
                 send_RTSP_request("SETUP");
-                if (parse_server_response() != 200)
+                if (parse_server_response(0) != 200)
                     System.out.println("Invalid Server Response");
                 else
                 {
@@ -165,7 +173,7 @@ public class Client{
                 RTSPSeqNb++;
                 send_RTSP_request("PLAY");
 //                System.out.println("break_playfunction");
-                if (parse_server_response() != 200)
+                if (parse_server_response(0) != 200)
                     System.out.println("Invalid Server Response");
                 else
                 {
@@ -183,7 +191,7 @@ public class Client{
             {
                 RTSPSeqNb++;
                 send_RTSP_request("PAUSE");
-                if (parse_server_response() != 200)
+                if (parse_server_response(0) != 200)
                     System.out.println("Invalid Server Response");
                 else
                 {
@@ -200,7 +208,7 @@ public class Client{
             RTSPSeqNb++;
             send_RTSP_request("TEARDOWN");
 
-            if (parse_server_response() != 200)
+            if (parse_server_response(0) != 200)
                 System.out.println("Invalid Server Response");
             else
             {
@@ -209,6 +217,30 @@ public class Client{
                 timer.stop();
                 System.exit(0);
             }
+        }
+    }
+    
+    class describeButtonListener implements ActionListener {
+        public void actionPerformed(ActionEvent e){
+            RTSPSeqNb++;
+            send_RTSP_request("DESCRIBE");
+
+            if (parse_server_response(1) != 200)
+                System.out.println("Invalid Server Response");
+
+            if (state == PLAYING){
+                RTSPSeqNb++;
+                send_RTSP_request("PAUSE");
+                if (parse_server_response(0) != 200)
+                    System.out.println("Invalid Server Response");
+                else
+                {
+                    state = READY;
+                    System.out.println("New RTSP state: READY");
+                    timer.stop();
+                }
+            }
+            timer.stop();
         }
     }
 
@@ -231,10 +263,10 @@ public class Client{
                 RtpPacket rtp_packet = new RtpPacket(rcvdp.getData(), rcvdp.getLength());
 
                 //print important header fields of the RTP packet received:
-                System.out.println("Got RTP packet with SeqNum # "+rtp_packet.getsequencenumber()+" TimeStamp "+rtp_packet.gettimestamp()+" ms, of type "+rtp_packet.getpayloadtype());
-
+                // System.out.println("Got RTP packet with SeqNum # "+rtp_packet.getsequencenumber()+" TimeStamp "+rtp_packet.gettimestamp()+" ms, of type "+rtp_packet.getpayloadtype());
+                System.out.println("Current Seq Num: " + rtp_packet.getsequencenumber());
                 //print header bitstream:
-                rtp_packet.printheader();
+                // rtp_packet.printheader();
 
                 //get the payload bitstream from the RtpPacket object
                 int payload_length = rtp_packet.getpayload_length();
@@ -261,32 +293,40 @@ public class Client{
     //------------------------------------
     //Parse Server Response
     //------------------------------------
-    private int parse_server_response()
+    private int parse_server_response(int i)
     {
         int reply_code = 0;
         try{
-            //parse status line and extract the reply_code:
+        //parse status line and extract the reply_code:
             String StatusLine = RTSPBufferedReader.readLine();
             //System.out.println("RTSP Client - Received from Server:");
             System.out.println(StatusLine);
-//            System.out.println("1");
             StringTokenizer tokens = new StringTokenizer(StatusLine);
             tokens.nextToken(); //skip over the RTSP version
             reply_code = Integer.parseInt(tokens.nextToken());
-//            System.out.println("2");
-            //if reply code is OK get and print the 2 other lines
             if (reply_code == 200)
             {
                 String SeqNumLine = RTSPBufferedReader.readLine();
                 System.out.println(SeqNumLine);
-//                System.out.println("3");
                 String SessionLine = RTSPBufferedReader.readLine();
                 System.out.println(SessionLine);
-//                System.out.println("4");
-                //if state == INIT gets the Session Id from the SessionLine
                 tokens = new StringTokenizer(SessionLine);
                 tokens.nextToken(); //skip over the Session:
                 RTSPid = Integer.parseInt(tokens.nextToken());
+                if (i != 0) {
+                    String line = null;
+                    while (RTSPBufferedReader.ready()){
+                        System.out.println(RTSPBufferedReader.readLine());
+                    }                    
+                }
+            }
+            else{
+                String SeqNumLine = RTSPBufferedReader.readLine();
+                System.out.println(SeqNumLine);
+                String SessionLine = RTSPBufferedReader.readLine();
+                System.out.println(SessionLine);
+                JOptionPane.showMessageDialog(f, "File not found");
+                System.exit(0);
             }
         }
         catch(Exception ex)
@@ -294,6 +334,7 @@ public class Client{
             System.out.println("Exception caught: "+ex);
             System.exit(0);
         }
+            
 
         return reply_code;
     }
