@@ -51,6 +51,7 @@ public class Client{
     //Video constants:
     static int MJPEG_TYPE = 26; //RTP payload type for MJPEG video
 
+    int countRtpReceive = 0;
     public Client() {
 
         //build GUI
@@ -184,6 +185,7 @@ public class Client{
                 }                                                             
                 RTSPSeqNb = 1;
                 send_RTSP_request("SETUP");
+                countRtpReceive = 0;
                 if (parse_server_response(0) != 200)
                     System.out.println("Invalid Server Response");
                 else
@@ -309,7 +311,7 @@ public class Client{
 
                 //create an RtpPacket object from the DP
                 RtpPacket rtp_packet = new RtpPacket(rcvdp.getData(), rcvdp.getLength());
-
+                countRtpReceive += 1;
                 //print important header fields of the RTP packet received:
                 // System.out.println("Got RTP packet with SeqNum # "+rtp_packet.getsequencenumber()+" TimeStamp "+rtp_packet.gettimestamp()+" ms, of type "+rtp_packet.getpayloadtype());
                 System.out.println("Current Seq Num: " + rtp_packet.getsequencenumber());
@@ -409,7 +411,10 @@ public class Client{
                 String session = "Session: " + RTSPid;
                 RTSPBufferedWriter.write(session);
             }
-
+            if (request_type.equals("PAUSE")) {
+                String RtpReceived = CRLF +"CountRtpReceive " + countRtpReceive;
+                RTSPBufferedWriter.write(RtpReceived);
+            }
             RTSPBufferedWriter.flush();
         }
         catch(Exception ex)

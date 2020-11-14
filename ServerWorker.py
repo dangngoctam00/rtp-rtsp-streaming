@@ -23,6 +23,8 @@ class ServerWorker:
 
     clientInfo = {}
 
+    countRTPSent = 0
+
     def __init__(self, clientInfo):
         self.clientInfo = clientInfo
 
@@ -74,6 +76,7 @@ class ServerWorker:
 
                 # Get the RTP/UDP port from the last line
                 self.clientInfo['rtpPort'] = request[2].split(' ')[3]
+                countRTPSent = 0
 
         # Process PLAY request
         elif requestType == self.PLAY:
@@ -100,6 +103,8 @@ class ServerWorker:
                 self.clientInfo['event'].set()
 
                 self.replyRtsp(self.OK_200, seq[1])
+                line4 = self.countRTPSent -  eval(request[3].split(' ')[1])
+                print("=========================\nRTP packet loss rate: " + str(line4) + '/' + str(self.countRTPSent)+ "\n=========================\n")
 
         # Process TEARDOWN request
         elif requestType == self.TEARDOWN:
@@ -137,6 +142,7 @@ class ServerWorker:
                 try:
                     address = self.clientInfo['rtspSocket'][1][0]
                     port = int(self.clientInfo['rtpPort'])
+                    self.countRTPSent += 1
                     self.clientInfo['rtpSocket'].sendto(self.makeRtp(data, frameNumber), (address, port))
                 except Exception as msg:
                     print("Connection Error")
