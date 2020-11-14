@@ -13,6 +13,7 @@ public class Client{
     JButton setupButton = new JButton("Setup");
     JButton playButton = new JButton("Play");
     JButton pauseButton = new JButton("Pause");
+    JButton stopButton = new JButton("Stop");
     JButton tearButton = new JButton("Teardown");
     JButton describeButton = new JButton("Describe");
     JPanel mainPanel = new JPanel();
@@ -64,16 +65,18 @@ public class Client{
 
         //Buttons
         buttonPanel.setLayout(new GridLayout(1,0));
-        buttonPanel.add(setupButton);
+        //buttonPanel.add(setupButton);
         buttonPanel.add(playButton);
         buttonPanel.add(pauseButton);
         buttonPanel.add(describeButton);
+        buttonPanel.add(stopButton);
         buttonPanel.add(tearButton);
-        setupButton.addActionListener(new setupButtonListener());
+        //setupButton.addActionListener(new setupButtonListener());
         playButton.addActionListener(new playButtonListener());
         pauseButton.addActionListener(new pauseButtonListener());
         tearButton.addActionListener(new tearButtonListener());
         describeButton.addActionListener(new describeButtonListener());
+        stopButton.addActionListener(new stopButtonListener());
 
        
 
@@ -140,10 +143,36 @@ public class Client{
     //Need to complete
     //------------------------------------
 
-    class setupButtonListener implements ActionListener{
+    // class setupButtonListener implements ActionListener{
+    //     public void actionPerformed(ActionEvent e){
+    //         if (state == INIT)
+    //         {
+    //             try{
+    //                 RTPsocket = new DatagramSocket(RTP_RCV_PORT);
+    //                 RTPsocket.setSoTimeout(5*100);
+    //             }
+    //             catch (SocketException se)
+    //             {
+    //                 System.out.println("Socket exception: "+se);
+    //                 System.exit(0);
+    //             }
+    //             RTSPSeqNb = 1;
+    //             send_RTSP_request("SETUP");
+    //             if (parse_server_response(0) != 200)
+    //                 System.out.println("Invalid Server Response");
+    //             else
+    //             {
+    //                 state = READY;
+    //                 System.out.println("New RTSP state: READY");
+    //             }
+    //         }
+    //     }
+    // }
+
+    class playButtonListener implements ActionListener {
         public void actionPerformed(ActionEvent e){
             if (state == INIT)
-            {
+            {            
                 try{
                     RTPsocket = new DatagramSocket(RTP_RCV_PORT);
                     RTPsocket.setSoTimeout(5*100);
@@ -152,7 +181,7 @@ public class Client{
                 {
                     System.out.println("Socket exception: "+se);
                     System.exit(0);
-                }
+                }                                                             
                 RTSPSeqNb = 1;
                 send_RTSP_request("SETUP");
                 if (parse_server_response(0) != 200)
@@ -163,11 +192,8 @@ public class Client{
                     System.out.println("New RTSP state: READY");
                 }
             }
-        }
-    }
 
-    class playButtonListener implements ActionListener {
-        public void actionPerformed(ActionEvent e){
+
             if (state == READY)
             {
                 RTSPSeqNb++;
@@ -199,6 +225,24 @@ public class Client{
                     System.out.println("New RTSP state: READY");
                     timer.stop();
                 }
+            }
+        }
+    }
+
+    class stopButtonListener implements ActionListener {
+        public void actionPerformed(ActionEvent e){
+            RTSPSeqNb++;
+            send_RTSP_request("TEARDOWN");
+            RTPsocket.close();
+            iconLabel.setIcon(null);
+            if (parse_server_response(0) != 200)
+                System.out.println("Invalid Server Response");
+            else
+            {
+                state = INIT;
+                System.out.println("New RTSP state: INIT");
+                timer.stop();
+                
             }
         }
     }

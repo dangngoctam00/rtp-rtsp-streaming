@@ -51,8 +51,10 @@ class ServerWorker:
 
         # Get the RTSP sequence number
         seq = request[1].split(' ')
+        #print("abcbbcaafhkjsafsa")
         # Process SETUP request
         if requestType == self.SETUP:
+            #print("metvc")
             if self.state == self.INIT:
                 # Update state
                 print("processing SETUP\n")
@@ -66,7 +68,7 @@ class ServerWorker:
                 except IOError:
                     self.replyRtsp(self.FILE_NOT_FOUND_404, seq[1])
                                
-
+                
                 # Send RTSP reply
                 self.replyRtsp(self.OK_200, seq[1])
 
@@ -101,6 +103,7 @@ class ServerWorker:
 
         # Process TEARDOWN request
         elif requestType == self.TEARDOWN:
+            self.state = self.INIT
             print("processing TEARDOWN\n")
 
             self.clientInfo['event'].set()
