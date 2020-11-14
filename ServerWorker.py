@@ -169,7 +169,7 @@ class ServerWorker:
                 reply = 'RTSP/1.0 200 OK\nCSeq: ' + seq + '\nSession: ' + str(self.clientInfo['session']) + "\n"
                 connSocket = self.clientInfo['rtspSocket'][0]
 
-                reply = reply + "v=0\nm=video RTP/UDP " + str(self.clientInfo['rtpPort']) + " 26\n"
+                reply = reply + "v=0\nm=video " + str(self.clientInfo['rtpPort']) + " RTP/UDP 26\n"
                 reply = reply + "a=rtpmap:26 JPEG/90000\n" 
                 connSocket.send(reply.encode())
             else:

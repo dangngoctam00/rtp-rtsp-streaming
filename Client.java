@@ -14,7 +14,7 @@ public class Client{
     JButton playButton = new JButton("Play");
     JButton pauseButton = new JButton("Pause");
     JButton stopButton = new JButton("Stop");
-    JButton tearButton = new JButton("Teardown");
+    JButton closeButton = new JButton("Close");
     JButton describeButton = new JButton("Describe");
     JPanel mainPanel = new JPanel();
     JPanel buttonPanel = new JPanel();
@@ -70,11 +70,11 @@ public class Client{
         buttonPanel.add(pauseButton);
         buttonPanel.add(describeButton);
         buttonPanel.add(stopButton);
-        buttonPanel.add(tearButton);
+        buttonPanel.add(closeButton);
         //setupButton.addActionListener(new setupButtonListener());
         playButton.addActionListener(new playButtonListener());
         pauseButton.addActionListener(new pauseButtonListener());
-        tearButton.addActionListener(new tearButtonListener());
+        closeButton.addActionListener(new closeButtonListener());
         describeButton.addActionListener(new describeButtonListener());
         stopButton.addActionListener(new stopButtonListener());
 
@@ -247,7 +247,7 @@ public class Client{
         }
     }
 
-    class tearButtonListener implements ActionListener {
+    class closeButtonListener implements ActionListener {
         public void actionPerformed(ActionEvent e){
             RTSPSeqNb++;
             send_RTSP_request("TEARDOWN");
@@ -266,13 +266,8 @@ public class Client{
     
     class describeButtonListener implements ActionListener {
         public void actionPerformed(ActionEvent e){
-            RTSPSeqNb++;
-            send_RTSP_request("DESCRIBE");
-
-            if (parse_server_response(1) != 200)
-                System.out.println("Invalid Server Response");
-
-            if (state == PLAYING){
+            if (state == PLAYING)
+            {
                 RTSPSeqNb++;
                 send_RTSP_request("PAUSE");
                 if (parse_server_response(0) != 200)
@@ -284,6 +279,15 @@ public class Client{
                     timer.stop();
                 }
             }
+            RTSPSeqNb++;
+            send_RTSP_request("DESCRIBE");   
+            if (parse_server_response(1) != 200)
+                System.out.println("Invalid Server Response");
+            else
+            {
+                state = READY;
+                System.out.println("New RTSP state: READY");
+            }         
             timer.stop();
         }
     }
