@@ -6,7 +6,7 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.Timer;
-
+import java.util.concurrent.TimeUnit;
 public class Client{
 
     JFrame f = new JFrame("Client");
@@ -52,6 +52,9 @@ public class Client{
     static int MJPEG_TYPE = 26; //RTP payload type for MJPEG video
 
     int countRtpReceive = 0;
+
+    long startTime;
+    long datalength = 0;
     public Client() {
 
         //build GUI
@@ -186,6 +189,7 @@ public class Client{
                 RTSPSeqNb = 1;
                 send_RTSP_request("SETUP");
                 countRtpReceive = 0;
+                
                 if (parse_server_response(0) != 200)
                     System.out.println("Invalid Server Response");
                 else
@@ -199,6 +203,8 @@ public class Client{
             if (state == READY)
             {
                 RTSPSeqNb++;
+                startTime = System.nanoTime();
+                datalength = 0;
                 send_RTSP_request("PLAY");
 //                System.out.println("break_playfunction");
                 if (parse_server_response(0) != 200)
@@ -218,6 +224,8 @@ public class Client{
             if (state == PLAYING)
             {
                 RTSPSeqNb++;
+                startTime = System.nanoTime();
+                datalength = 0;
                 send_RTSP_request("PAUSE");
                 if (parse_server_response(0) != 200)
                     System.out.println("Invalid Server Response");
@@ -308,13 +316,15 @@ public class Client{
             try{
                 //receive the DP from the socket:
                 RTPsocket.receive(rcvdp);
-
+                datalength += rcvdp.getLength();
                 //create an RtpPacket object from the DP
                 RtpPacket rtp_packet = new RtpPacket(rcvdp.getData(), rcvdp.getLength());
                 countRtpReceive += 1;
                 //print important header fields of the RTP packet received:
                 // System.out.println("Got RTP packet with SeqNum # "+rtp_packet.getsequencenumber()+" TimeStamp "+rtp_packet.gettimestamp()+" ms, of type "+rtp_packet.getpayloadtype());
                 System.out.println("Current Seq Num: " + rtp_packet.getsequencenumber());
+                System.out.println("Video data rate: " + (datalength *1000000000) /(System.nanoTime() - startTime + 1) + " bytes per second");
+
                 //print header bitstream:
                 // rtp_packet.printheader();
 

@@ -76,7 +76,7 @@ class ServerWorker:
 
                 # Get the RTP/UDP port from the last line
                 self.clientInfo['rtpPort'] = request[2].split(' ')[3]
-                countRTPSent = 0
+                self.countRTPSent = 0
 
         # Process PLAY request
         elif requestType == self.PLAY:
@@ -104,7 +104,7 @@ class ServerWorker:
 
                 self.replyRtsp(self.OK_200, seq[1])
                 line4 = self.countRTPSent -  eval(request[3].split(' ')[1])
-                print("=========================\nRTP packet loss rate: " + str(line4) + '/' + str(self.countRTPSent)+ "\n=========================\n")
+                print("=========================\nRTP packet loss rate: " + str(line4) + '/' + str(self.countRTPSent) + "\n=========================\n")
 
         # Process TEARDOWN request
         elif requestType == self.TEARDOWN:
